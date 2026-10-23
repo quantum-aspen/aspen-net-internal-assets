@@ -1,11 +1,11 @@
-# aspen-net-pages — agent notes
+# aspen-net-internal-assets — agent notes
 
 Static pages for the ASPEN-NET software team: interactive diagrams and design drafts.
 Everything under `site/` is published to GitHub Pages by `.github/workflows/pages.yml` on
 every push to `main`, so **a commit on `main` is a publish**. There is no build step: the
 files in `site/` are served exactly as they are.
 
-Live at <https://quantum-aspen.github.io/aspen-net-pages/>.
+Live at <https://quantum-aspen.github.io/aspen-net-internal-assets/>.
 
 ## What belongs here
 
@@ -32,7 +32,7 @@ interactive piece, put the prose on the wiki and only the interactive piece here
 - One folder per page: `site/<slug>/index.html`, linked as `<slug>/` (with the trailing
   slash). Slugs are lowercase-kebab and permanent once linked from the wiki.
 - Keep pages self-contained: inline CSS and JS. Use relative paths only. The site is
-  served under `/aspen-net-pages/`, so a root-absolute path like `/foo.css` breaks.
+  served under `/aspen-net-internal-assets/`, so a root-absolute path like `/foo.css` breaks.
 - External scripts come from a CDN with an exact pinned version (e.g. `d3@7.9.0`), never
   `latest` or an unpinned major version.
 - Support light and dark mode (`prefers-color-scheme`) and phone widths.
