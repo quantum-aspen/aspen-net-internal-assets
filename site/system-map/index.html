@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>ASPEN-NET System Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root {
+  --bg: #F3F5F7;
+  --panel: #FFFFFF;
+  --ink: #15202B;
+  --muted: #5A6878;
+  --line: #C9D1DA;
+  --edge: #3E4C5A;
+  --hosted: #E8EEF8;
+  --hosted-edge: #9FB5D9;
+  --lab: #E7F1EB;
+  --lab-edge: #9CC2AA;
+  --node: #F5FAF6;
+  --user: #EEF0F3;
+  --accent: #D9480F;
+  --accent-soft: #FCE6DB;
+  --t-notes: #17694D; --t-notes-bg: #DCF0E6;
+  --t-inf: #7F5300;  --t-inf-bg: #F6EACB;
+  --t-unk: #9B2328;  --t-unk-bg: #F7DCDD;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0F151B; --panel: #162029; --ink: #E3E9EF; --muted: #93A1B0; --line: #2D3A47; --edge: #A9B6C3;
+    --hosted: #152238; --hosted-edge: #3D5B8C; --lab: #13271D; --lab-edge: #3C7555; --node: #183024; --user: #1A232C;
+    --accent: #FF7A45; --accent-soft: #3A2217;
+    --t-notes: #7FD6B0; --t-notes-bg: #133A2B; --t-inf: #F0C46A; --t-inf-bg: #3A2E12; --t-unk: #F29A9E; --t-unk-bg: #401C1F;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0F151B; --panel: #162029; --ink: #E3E9EF; --muted: #93A1B0; --line: #2D3A47; --edge: #A9B6C3;
+  --hosted: #152238; --hosted-edge: #3D5B8C; --lab: #13271D; --lab-edge: #3C7555; --node: #183024; --user: #1A232C;
+  --accent: #FF7A45; --accent-soft: #3A2217;
+  --t-notes: #7FD6B0; --t-notes-bg: #133A2B; --t-inf: #F0C46A; --t-inf-bg: #3A2E12; --t-unk: #F29A9E; --t-unk-bg: #401C1F;
+}
+
+html, body { background: var(--bg); color: var(--ink); }
+body { font-family: var(--sans); font-size: 15px; line-height: 1.5; padding-inline: 20px; padding-block: 24px 48px; }
+.page { max-width: 1320px; margin: 0 auto; display: grid; gap: 20px; }
+header { display: grid; gap: 6px; }
+h1 { font-size: 22px; font-weight: 600; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+.sub { color: var(--muted); margin: 0; max-width: 72ch; }
+.sub b { color: var(--ink); font-weight: 500; }
+
+.layout { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(320px, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 920px) { .layout { grid-template-columns: 1fr; } }
+
+.diagram { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; overflow-x: auto; }
+.diagram svg { display: block; width: 100%; min-width: 560px; height: auto; }
+figcaption { color: var(--muted); font-size: 13px; padding: 8px 4px 2px; display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.key { display: inline-flex; align-items: center; gap: 6px; }
+.key svg { width: 34px; min-width: 0; height: 10px; }
+
+/* SVG */
+.zone rect { stroke-width: 1.2; }
+.zone.user rect { fill: var(--user); stroke: var(--line); }
+.zone.hosted rect { fill: var(--hosted); stroke: var(--hosted-edge); }
+.zone.lab rect { fill: var(--lab); stroke: var(--lab-edge); }
+.zone.node rect { fill: var(--node); stroke: var(--lab-edge); stroke-dasharray: 4 3; }
+.zone text { fill: var(--muted); font: 600 11px var(--sans); letter-spacing: 0.06em; text-transform: uppercase; }
+.zone .q { fill: var(--t-unk); }
+.zone[data-id] { cursor: pointer; }
+.zone[data-id]:hover text, .zone[data-id]:focus-visible text { fill: var(--ink); }
+
+.comp { cursor: pointer; }
+.comp rect { fill: var(--panel); stroke: var(--edge); stroke-width: 1.2; }
+.comp .t1 { fill: var(--ink); font: 600 13px var(--sans); }
+.comp .t2 { fill: var(--muted); font: 400 11px var(--sans); }
+.comp:hover rect, .comp:focus-visible rect { stroke-width: 2; }
+.comp.sel rect { stroke: var(--accent); stroke-width: 2.2; fill: var(--accent-soft); }
+
+.edge { cursor: pointer; }
+.edge .hit { stroke: transparent; stroke-width: 16; fill: none; }
+.edge .ln { stroke: var(--edge); stroke-width: 1.5; fill: none; }
+.edge.logs .ln { stroke-dasharray: 5 4; }
+.edge.hwsig .ln { stroke-width: 4; }
+.edge .badge { fill: var(--panel); stroke: var(--edge); stroke-width: 1.2; }
+.edge .bt { fill: var(--ink); font: 600 11px var(--mono); }
+.edge .tr { fill: var(--muted); font: 400 11px var(--mono); }
+.edge:hover .ln, .edge:focus-visible .ln { stroke-width: 2.5; }
+.edge.hwsig:hover .ln { stroke-width: 5; }
+.edge.sel .ln { stroke: var(--accent); stroke-width: 2.5; }
+.edge.hwsig.sel .ln { stroke-width: 5; }
+.edge.sel .badge { fill: var(--accent); stroke: var(--accent); }
+.edge.sel .bt { fill: var(--panel); }
+.edge.sel .tr { fill: var(--accent); }
+.mk { fill: var(--edge); }
+.mk-sel { fill: var(--accent); }
+svg :focus { outline: none; }
+svg :focus-visible .badge, svg :focus-visible rect { outline: none; }
+
+/* Panel */
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px 22px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); max-height: calc(100vh - 24px); overflow-y: auto; }
+@media (max-width: 920px) { .panel { position: static; max-height: none; } }
+.panel h2 { font-size: 17px; font-weight: 600; margin: 0 0 4px; text-wrap: balance; }
+.panel h3 { font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); margin: 20px 0 8px; }
+.panel p { margin: 0 0 8px; }
+.eyebrow { font: 600 12px var(--mono); color: var(--accent); margin-bottom: 2px; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 12px 0 0; font-size: 14px; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; }
+.mono { font-family: var(--mono); font-size: 13px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+th { text-align: left; font-weight: 500; color: var(--muted); font-size: 12px; padding: 4px 8px 6px 0; border-bottom: 1px solid var(--line); }
+td { padding: 7px 8px 7px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+td:last-child, th:last-child { padding-right: 0; }
+.ret { color: var(--muted); }
+.src { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+.tag { display: inline-block; font: 600 10.5px var(--mono); padding: 1px 6px; border-radius: 4px; white-space: nowrap; }
+.tag.notes { color: var(--t-notes); background: var(--t-notes-bg); }
+.tag.inferred { color: var(--t-inf); background: var(--t-inf-bg); }
+.tag.unknown { color: var(--t-unk); background: var(--t-unk-bg); }
+
+ol.gaps { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+ol.gaps li { display: grid; grid-template-columns: 3.4em 1fr; gap: 8px; font-size: 14px; }
+ol.gaps .gid { font: 600 12px var(--mono); color: var(--t-unk); padding-top: 2px; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; }
+
+.links { display: flex; flex-wrap: wrap; gap: 6px; }
+button.chip { font: 500 12px var(--mono); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 5px; padding: 3px 8px; cursor: pointer; }
+button.chip:hover { border-color: var(--edge); }
+button.chip:focus-visible, button.back:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+button.back { font: 500 13px var(--sans); color: var(--muted); background: none; border: none; padding: 0; cursor: pointer; margin-bottom: 12px; }
+button.back:hover { color: var(--ink); }
+
+.ov-list { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.ov-list button { width: 100%; display: grid; grid-template-columns: 3em 1fr auto; gap: 10px; align-items: baseline; text-align: left; background: none; border: none; border-radius: 6px; padding: 6px 8px; color: var(--ink); font: inherit; font-size: 14px; cursor: pointer; }
+.ov-list button:hover { background: var(--bg); }
+.ov-list button:focus-visible { outline: 2px solid var(--accent); }
+.ov-list .id { font: 600 12px var(--mono); }
+.ov-list .n { font: 500 12px var(--mono); color: var(--t-unk); font-variant-numeric: tabular-nums; }
+.legend-tags { display: grid; gap: 6px; font-size: 14px; }
+.legend-tags div { display: flex; gap: 8px; align-items: baseline; }
+@media (prefers-reduced-motion: no-preference) { .edge .ln, .comp rect { transition: stroke 120ms, stroke-width 120ms, fill 120ms; } }
+</style>
+
+</head><body>
+
+<div class="page">
+  <header>
+    <h1>ASPEN-NET System Map</h1>
+    <p class="sub">Design-phase MVP: <b>two Boulder nodes, one protocol at a time</b>. Click any arrow or box to see where it runs, what it's asked to do, and what nobody knows yet. Draft for discussion.</p>
+  </header>
+
+  <div class="layout">
+    <figure class="diagram" style="margin:0">
+      <svg id="map" viewBox="0 0 760 790" role="img" aria-label="ASPEN-NET MVP deployment: a researcher reaches a hosted Public API and Job service over HTTPS; the Job service sends compiled jobs over a site link to the Quantum Layer API in the Boulder lab, which commands node controllers, hardware services and the attosecond controller; the lab pushes logs to hosted observability.">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk" d="M0,0 L10,5 L0,10 z"/></marker>
+          <marker id="arr-sel" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-sel" d="M0,0 L10,5 L0,10 z"/></marker>
+          <marker id="arrw" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path class="mk" d="M0,0 L10,5 L0,10 z"/></marker>
+          <marker id="arrw-sel" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path class="mk-sel" d="M0,0 L10,5 L0,10 z"/></marker>
+        </defs>
+
+        <!-- Zones -->
+        <g class="zone user" data-id="z-user" tabindex="0" role="button" aria-label="Researcher's machine">
+          <rect x="30" y="12" width="240" height="100" rx="10"/>
+          <text x="42" y="30">Researcher's machine</text>
+        </g>
+        <g class="zone hosted" data-id="z-hosted" tabindex="0" role="button" aria-label="Hosted tier">
+          <rect x="30" y="140" width="700" height="172" rx="10"/>
+          <text x="718" y="158" text-anchor="end">Hosted · cloud or campus DC <tspan class="q">?</tspan></text>
+        </g>
+        <g class="zone lab" data-id="z-lab" tabindex="0" role="button" aria-label="Boulder lab">
+          <rect x="30" y="360" width="700" height="415" rx="10"/>
+          <text x="42" y="378">Boulder lab · on-prem</text>
+        </g>
+        <g class="zone node" data-id="z-node" tabindex="0" role="button" aria-label="Node machine">
+          <rect x="180" y="474" width="310" height="172" rx="8"/>
+          <text x="192" y="490">Node machine ×2</text>
+        </g>
+
+        <!-- Edges (drawn before boxes so boxes sit on top) -->
+        <g class="edge" data-id="A1" tabindex="0" role="button" aria-label="A1 Researcher to Public API">
+          <path class="hit" d="M150,92 V172"/>
+          <path class="ln" d="M150,92 V172" marker-end="url(#arr)"/>
+          <rect class="badge" x="160" y="117" width="28" height="18" rx="4"/><text class="bt" x="174" y="130" text-anchor="middle">A1</text>
+          <text class="tr" x="194" y="130">HTTPS</text>
+        </g>
+        <g class="edge" data-id="A2" tabindex="0" role="button" aria-label="A2 Public API to Job service">
+          <path class="hit" d="M235,200 H293"/>
+          <path class="ln" d="M235,200 H293" marker-end="url(#arr)"/>
+          <rect class="badge" x="250" y="178" width="28" height="18" rx="4"/><text class="bt" x="264" y="191" text-anchor="middle">A2</text>
+        </g>
+        <g class="edge" data-id="A3" tabindex="0" role="button" aria-label="A3 Job service to Results DB">
+          <path class="hit" d="M465,200 H523"/>
+          <path class="ln" d="M465,200 H523" marker-end="url(#arr)"/>
+          <rect class="badge" x="480" y="178" width="28" height="18" rx="4"/><text class="bt" x="494" y="191" text-anchor="middle">A3</text>
+        </g>
+        <g class="edge" data-id="A4" tabindex="0" role="button" aria-label="A4 Job service to Quantum Layer API over the site link">
+          <path class="hit" d="M380,226 V392"/>
+          <path class="ln" d="M380,226 V392" marker-end="url(#arr)"/>
+          <rect class="badge" x="390" y="325" width="28" height="18" rx="4"/><text class="bt" x="404" y="338" text-anchor="middle">A4</text>
+          <text class="tr" x="370" y="338" text-anchor="end">site link · HTTPS + VPN? mTLS?</text>
+        </g>
+        <g class="edge" data-id="A5" tabindex="0" role="button" aria-label="A5 Quantum Layer API to Node controller">
+          <path class="hit" d="M380,446 V496"/>
+          <path class="ln" d="M380,446 V496" marker-end="url(#arr)"/>
+          <rect class="badge" x="390" y="452" width="28" height="18" rx="4"/><text class="bt" x="404" y="465" text-anchor="middle">A5</text>
+          <text class="tr" x="424" y="465">HTTP+JSON?</text>
+        </g>
+        <g class="edge" data-id="A6" tabindex="0" role="button" aria-label="A6 Node controller to Hardware services">
+          <path class="hit" d="M380,550 V582"/>
+          <path class="ln" d="M380,550 V582" marker-end="url(#arr)"/>
+          <rect class="badge" x="390" y="557" width="28" height="18" rx="4"/><text class="bt" x="404" y="570" text-anchor="middle">A6</text>
+          <text class="tr" x="424" y="570">HTTP+JSON?</text>
+        </g>
+        <g class="edge" data-id="A7" tabindex="0" role="button" aria-label="A7 Hardware services to Instruments">
+          <path class="hit" d="M380,636 V698"/>
+          <path class="ln" d="M380,636 V698" marker-end="url(#arr)"/>
+          <rect class="badge" x="390" y="660" width="28" height="18" rx="4"/><text class="bt" x="404" y="673" text-anchor="middle">A7</text>
+          <text class="tr" x="370" y="673" text-anchor="end">vendor · USB · serial · TCP</text>
+        </g>
+        <g class="edge" data-id="A8" tabindex="0" role="button" aria-label="A8 Quantum Layer API to Attosecond controller">
+          <path class="hit" d="M465,420 H615 V539"/>
+          <path class="ln" d="M465,420 H615 V539" marker-end="url(#arr)"/>
+          <rect class="badge" x="520" y="398" width="28" height="18" rx="4"/><text class="bt" x="534" y="411" text-anchor="middle">A8</text>
+          <text class="tr" x="627" y="470">REST / ZMQ</text>
+        </g>
+        <g class="edge hwsig" data-id="A9" tabindex="0" role="button" aria-label="A9 Attosecond controller to Instruments, analog hardware signals">
+          <path class="hit" d="M615,593 V696"/>
+          <path class="ln" d="M615,593 V694" marker-end="url(#arrw)"/>
+          <rect class="badge" x="627" y="628" width="28" height="18" rx="4"/><text class="bt" x="641" y="641" text-anchor="middle">A9</text>
+          <text class="tr" x="627" y="662">analog</text>
+          <text class="tr" x="627" y="676">no software</text>
+        </g>
+        <g class="edge logs" data-id="A10" tabindex="0" role="button" aria-label="A10 Lab to Observability, logs and metrics">
+          <path class="hit" d="M680,360 V300"/>
+          <path class="ln" d="M680,360 V300" marker-end="url(#arr)"/>
+          <rect class="badge" x="690" y="321" width="34" height="18" rx="4"/><text class="bt" x="707" y="334" text-anchor="middle">A10</text>
+          <text class="tr" x="670" y="334" text-anchor="end">logs + metrics</text>
+        </g>
+
+        <!-- Components -->
+        <g class="comp" data-id="c-user" tabindex="0" role="button"><rect x="65" y="40" width="170" height="52" rx="6"/><text class="t1" x="150" y="62" text-anchor="middle">Researcher</text><text class="t2" x="150" y="79" text-anchor="middle">browser or Python client</text></g>
+        <g class="comp" data-id="c-api" tabindex="0" role="button"><rect x="65" y="174" width="170" height="52" rx="6"/><text class="t1" x="150" y="196" text-anchor="middle">Public API + web</text><text class="t2" x="150" y="213" text-anchor="middle">auth · jobs · status</text></g>
+        <g class="comp" data-id="c-jobs" tabindex="0" role="button"><rect x="295" y="174" width="170" height="52" rx="6"/><text class="t1" x="380" y="196" text-anchor="middle">Job service</text><text class="t2" x="380" y="213" text-anchor="middle">queue · compile · results</text></g>
+        <g class="comp" data-id="c-db" tabindex="0" role="button"><rect x="525" y="174" width="170" height="52" rx="14"/><text class="t1" x="610" y="196" text-anchor="middle">Results DB</text><text class="t2" x="610" y="213" text-anchor="middle">per-trial tables</text></g>
+        <g class="comp" data-id="c-obs" tabindex="0" role="button"><rect x="525" y="246" width="170" height="52" rx="6"/><text class="t1" x="610" y="268" text-anchor="middle">Observability</text><text class="t2" x="610" y="285" text-anchor="middle">logs · metrics · dashboards</text></g>
+        <g class="comp" data-id="c-qapi" tabindex="0" role="button"><rect x="295" y="394" width="170" height="52" rx="6"/><text class="t1" x="380" y="416" text-anchor="middle">Quantum Layer API</text><text class="t2" x="380" y="433" text-anchor="middle">site control server</text></g>
+        <g class="comp" data-id="c-nc" tabindex="0" role="button"><rect x="295" y="498" width="170" height="52" rx="6"/><text class="t1" x="380" y="520" text-anchor="middle">Node controller</text><text class="t2" x="380" y="537" text-anchor="middle">container</text></g>
+        <g class="comp" data-id="c-hw" tabindex="0" role="button"><rect x="295" y="584" width="170" height="52" rx="6"/><text class="t1" x="380" y="606" text-anchor="middle">Hardware services</text><text class="t2" x="380" y="623" text-anchor="middle">one container per device</text></g>
+        <g class="comp" data-id="c-atto" tabindex="0" role="button"><rect x="530" y="541" width="170" height="52" rx="6"/><text class="t1" x="615" y="563" text-anchor="middle">Attosecond controller</text><text class="t2" x="615" y="580" text-anchor="middle">SBC + FPGA per link</text></g>
+        <g class="comp" data-id="c-inst" tabindex="0" role="button"><rect x="120" y="700" width="540" height="52" rx="6"/><text class="t1" x="390" y="722" text-anchor="middle">Instruments</text><text class="t2" x="390" y="739" text-anchor="middle">lasers · sources · detectors · time taggers · waveplates · modulators · cryostats</text></g>
+      </svg>
+      <figcaption>
+        <span class="key"><svg viewBox="0 0 34 10" aria-hidden="true"><line x1="0" y1="5" x2="34" y2="5" stroke="currentColor" stroke-width="1.5"/></svg>request / command (arrow points from the caller)</span>
+        <span class="key"><svg viewBox="0 0 34 10" aria-hidden="true"><line x1="0" y1="5" x2="34" y2="5" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 4"/></svg>logs &amp; metrics</span>
+        <span class="key"><svg viewBox="0 0 34 10" aria-hidden="true"><line x1="0" y1="5" x2="34" y2="5" stroke="currentColor" stroke-width="4"/></svg>hardware signal</span>
+        <span>“?” = a guess to argue with</span>
+      </figcaption>
+    </figure>
+
+    <aside class="panel" id="panel" aria-live="polite"></aside>
+  </div>
+</div>
+
+<script>
+// ------------------------------------------------------------------
+// All content lives here. Tags: notes = said in a meeting or in the WBS,
+// inferred = reasoning from the notes, unknown = placeholder nobody discussed.
+// ------------------------------------------------------------------
+const EDGES = {
+  A1: {
+    from: "c-user", to: "c-api", title: "Researcher → Public API", transport: "HTTPS",
+    crosses: "Internet → hosted tier",
+    ops: [
+      ["Submit a job: a Bell state, two measurement settings per party, a trial count or duration, and optionally which nodes to use", "job id", "notes", "Krister, Aug 31"],
+      ["Get job status", "queued / running / done / failed", "inferred"],
+      ["Cancel a job", "—", "inferred"],
+      ["Fetch results", "per-trial table: Alice setting, Bob setting, Alice outcome, Bob outcome", "notes", "Krister, Aug 31"],
+      ["Network status: which nodes and links are up", "status summary", "notes", "WBS 1.5.2.6.1 public status page"],
+      ["Authenticate", "API key", "notes", "WBS 1.5.2.4"],
+    ],
+    gaps: [
+      "What notation users write jobs in. Krister said \"bras, kets, operators\", but the actual format is undecided.",
+      "Whether results come back in one batch at the end or stream in while the job runs. Streaming matters if a job runs for hours.",
+      "How users choose nodes: by name, by topology (\"three swaps apart\"), or both?",
+      "Real QKD is out of scope, since this is a protocol testbed. Does that need an explicit guard in the API, or is it just policy?",
+    ],
+  },
+  A2: {
+    from: "c-api", to: "c-jobs", title: "Public API → Job service", transport: "internal call",
+    crosses: "stays inside the hosted tier",
+    ops: [
+      ["Enqueue, de-queue, re-queue, interrupt", "—", "notes", "the four MVP test cases named in WBS 1.4.3"],
+      ["Query the queue", "position, estimated start", "inferred"],
+    ],
+    gaps: [
+      "What \"interrupt\" means physically: stop after the current trial, or stop right away and discard the partial trial?",
+      "Whether this has to be a separate service for the MVP, or can live inside the Public API process at first.",
+    ],
+  },
+  A3: {
+    from: "c-jobs", to: "c-db", title: "Job service → Results DB", transport: "database driver",
+    crosses: "stays inside the hosted tier",
+    ops: [
+      ["Write per-trial result tables and job metadata", "—", "inferred"],
+      ["Read results for a user", "tables", "inferred"],
+    ],
+    gaps: [
+      "How long results are kept, and who owns them. Check against the CU Data Governance guidelines.",
+      "Whether the job's calibration state (lock parameters, HOM alignment) should be stored with its results so they can be reproduced.",
+    ],
+  },
+  A4: {
+    from: "c-jobs", to: "c-qapi", title: "Job service → Quantum Layer API", transport: "HTTPS over VPN? mTLS?",
+    crosses: "hosted tier → lab (the site link)",
+    ops: [
+      ["Run a compiled job: relative phases between links, node assignments, a measurement tape (the settings each station steps through) and a trial count", "run id, then result packages", "notes", "Krister's compiler step and pre-loaded buffer model"],
+      ["MVP shortcut: bundle every request into one instruction set and broadcast it to every node", "—", "notes", "Krister: \"very crude and wasteful to start\""],
+      ["Get available links", "list of links", "notes", "\"these links aren't available, these are the ones that are\""],
+      ["Stop or abort a run", "—", "inferred"],
+      ["Run a calibration, e.g. HOM alignment", "success/failure, fitted offset", "inferred", "from the rep-rate trick being a routine step"],
+    ],
+    gaps: [
+      "Whether compiling happens in the hosted tier or at the lab. It decides whether this arrow carries user intent or a finished measurement tape.",
+      "Size of the measurement tape: 10 million settings is about one second at 10 MHz. How much does one job send across the site link?",
+      "What happens when a link drops mid-job: pause, degrade, or abort? Asked on Aug 31, not answered.",
+      "What format the result packages take, and whether they are pushed up or pulled.",
+      "How the link is secured: site-to-site VPN, mTLS over the public internet, or both.",
+    ],
+  },
+  A5: {
+    from: "c-qapi", to: "c-nc", title: "Quantum Layer API → Node controller", transport: "HTTP+JSON?",
+    crosses: "lab network",
+    ops: [
+      ["Load a measurement tape into this node's trial buffers", "ack", "notes", "Krister's buffer model"],
+      ["Apply device settings, e.g. waveplate angles or modulator config", "ack", "notes"],
+      ["Lifecycle: start, stop, arm", "state", "notes", "Jasper, Aug 27: \"start, stop, lifecycle changes, but not the actual intermediates\""],
+      ["Health and heartbeat", "aggregate health of this node's devices", "notes", "WBS 1.3.2.1.5"],
+      ["Collect trial results", "settings + outcomes per trial", "notes"],
+      ["List devices and their capabilities", "device inventory", "inferred"],
+    ],
+    gaps: [
+      "Which heartbeat metrics to report. On the Aug 13 list, never discussed.",
+      "What happens when the trial buffer runs out mid-run (stall, or keep going and throw those trials away later), and whether it's double-buffered.",
+      "What starts the synchronized trial clock: a software call on this arrow, or a hardware trigger?",
+      "Which devices count as \"in the node\" when hardware is only logically part of it (Aug 27 §8). Some may not sit on this machine.",
+    ],
+  },
+  A6: {
+    from: "c-nc", to: "c-hw", title: "Node controller → Hardware services", transport: "HTTP+JSON?",
+    crosses: "inside one node machine",
+    note: "Every service gets a common base, plus operations specific to its instrument type (PQN's three levels: instrument base, instrument type, specific driver).",
+    ops: [
+      ["Base: info, start, close, get and set parameters", "metadata", "notes", "PQN instrument base, Aug 13"],
+      ["Base: health and telemetry", "status, readings", "notes", "WBS 1.3.2.2.1; Marcos: should come free"],
+      ["Rotator / waveplate: get angle, move to, move by", "angle", "notes", "PQN example; the lab has a waveplate abstraction"],
+      ["Time tagger: configure channels, start/stop acquisition, stream tags", "tag stream", "notes", "a ZMQ tagger interface exists at the lab"],
+      ["Laser, detector, modulator, cryostat, power meter, optical switch", "…", "unknown", "only the device list exists (WBS 1.3.2.2.1)"],
+    ],
+    gaps: [
+      "The operations for every device type except rotators and taggers.",
+      "Whether tagger event streams can go through this arrow at all. They may be too high-volume for HTTP+JSON and need a separate streaming path (ZMQ?) straight to storage.",
+      "Who owns the list of instrument types (Aug 13), and how types are versioned.",
+      "Whether a digital twin can pretend to be a whole node, or only individual devices.",
+    ],
+  },
+  A7: {
+    from: "c-hw", to: "c-inst", title: "Hardware services → Instruments", transport: "vendor: USB · serial · TCP",
+    crosses: "machine → physical device",
+    note: "Whatever each vendor provides. Nothing to specify here: sealing off this mess inside the service is the whole point of having services.",
+    ops: [],
+    gaps: [
+      "Which time tagger vendors are in use, and where their APIs differ (asked on Aug 31).",
+      "The lab is building its own time tagger. What interface will it have?",
+    ],
+  },
+  A8: {
+    from: "c-qapi", to: "c-atto", title: "Quantum Layer API → Attosecond controller", transport: "REST / ZMQ (exists today)",
+    crosses: "quantum layer → attosecond layer",
+    note: "Commands go down; only status comes back. The attosecond layer never sends commands up (Krister's rule).",
+    ops: [
+      ["Set rep rate for a laser: a 32-bit value plus a laser id", "ack", "notes", "rep-rate scanning trick, Aug 31"],
+      ["Set frequency or phase relationships between nodes", "ack", "notes", "\"stabilize and set frequencies and change the phase relationship\""],
+      ["Get lock status and link availability", "per-link locked/unlocked, available links", "notes"],
+      ["Re-lock or run a calibration", "status", "notes", "Krister wants calibrations as automatic functions"],
+      ["Developer only: read/write PID and PDH loop parameters, debug mode", "parameters", "notes", "\"not something that any user should have access to\""],
+    ],
+    gaps: [
+      "Whether the whole network is kept stable continuously, or only links currently in use. Gina asked on Aug 31, no answer. It decides whether reserving links belongs in this API.",
+      "How the developer-only operations are protected: separate endpoint, separate credentials, or a separate network?",
+      "For the HOM dip: detection is nanosecond-scale and handled in hardware, so what does software see? Probably just \"calibration done\".",
+      "Signal specs, jitter and noise. These are Tara's to define; nothing yet.",
+      "The lab's existing interfaces mix REST and ZMQ. Standardize on one, or wrap whatever is there?",
+    ],
+  },
+  A9: {
+    from: "c-atto", to: "c-inst", title: "Attosecond controller → Instruments", transport: "analog · FPGA lock loops",
+    crosses: "hardware only",
+    note: "Analog 100 MHz clock distribution and FPGA lock loops (ADC → FPGA → PID/PDH → piezo). Deliberately outside the software design.",
+    ops: [],
+    gaps: [
+      "Herald click → memory release is sub-microsecond. Is it in the attosecond or quantum layer? (Aug 27 §4)",
+      "If parts of this signal chain can only be observed on an oscilloscope, what should software monitoring promise to show?",
+    ],
+  },
+  A10: {
+    from: "z-lab", to: "c-obs", title: "Lab → Observability", transport: "push agent?",
+    crosses: "lab → hosted tier",
+    note: "The only thing besides job traffic that crosses the site boundary.",
+    ops: [
+      ["Health, heartbeats and device telemetry from every container", "—", "notes", "Marcos: monitoring should come free from the contract"],
+      ["Lock status history from the attosecond layer", "—", "inferred"],
+      ["Audit log of the commands each job issued", "—", "inferred", "needed to work backwards from a bad result"],
+    ],
+    gaps: [
+      "If the site link drops, do logs buffer locally, or is there also an observability instance at the lab?",
+      "Do the attosecond SBCs send logs here too? They're lab-built devices, not our containers.",
+      "Alerting: who gets paged, and for what?",
+      "Is the audit log the same thing as the hardware change log from the Sep 17 versioning meeting?",
+    ],
+  },
+};
+
+const NODES = {
+  "c-user": { title: "Researcher", runs: "Their own machine", logs: "—", wbs: "WBS 1.5 (users)",
+    about: "States intent in quantum notation, gets back a per-trial results table. Analysis is the user's job, though helper Python scripts may ship.",
+    gaps: ["Is there an official Python client/SDK, or just the HTTP API?"] },
+  "c-api": { title: "Public API + web", runs: "Hosted tier", logs: "Observability", wbs: "WBS 1.5.2.3, 1.5.2.4, 1.5.2.6",
+    about: "The network's only external entry point: authentication, job submission, status, results. The public status page and account pages sit here too. The admin web and control panel (WBS 1.5.2.5) would presumably sit beside it; not drawn yet.",
+    gaps: ["Remote Access Manager is unassigned, so who owns this?"] },
+  "c-jobs": { title: "Job service", runs: "Hosted tier", logs: "Observability", wbs: "WBS 1.4.2.2, 1.4.3",
+    about: "Queues jobs and compiles them into hardware terms. For the MVP it runs one job at a time. Later it multiplexes about 14 users, and looks more like a compiler emitting measurement tapes than a live dispatcher.",
+    gaps: ["Does compiling happen here or at the lab? (see A4.1)"] },
+  "c-db": { title: "Results DB", runs: "Hosted tier", logs: "Observability", wbs: "WBS 1.5.2.6.4 (account storage), 1.1.4.8 (data management)",
+    about: "Per-trial result tables and job metadata.",
+    gaps: ["Where do raw time tags end up? They may be too large to leave the lab."] },
+  "c-obs": { title: "Observability", runs: "Hosted tier", logs: "—", wbs: "WBS 1.1.4 (DevOps), 1.5.2.5.1 (status dashboard)",
+    about: "One place for logs, metrics and dashboards across every layer. Marcos suggested a Grafana dashboard should be trivial once the service contract carries health.",
+    gaps: ["A lab-side instance too, for when the site link is down? (A10.1)"] },
+  "c-qapi": { title: "Quantum Layer API", runs: "Lab: site control server", logs: "Observability (A10)", wbs: "WBS 1.3.2",
+    about: "The single boundary the application layer calls. Turns runs into node and link allocations, commands node controllers and the attosecond layer, and gathers results. Runs at the lab so the lab stays operable when the site link is down.",
+    gaps: ["A dedicated server, or on one of the node machines for the MVP?", "Does it call the attosecond layer directly, or per node through node controllers? (Drawn as direct, per Krister's one-entry-point rule.)"] },
+  "c-nc": { title: "Node controller", runs: "Lab: node machine (container)", logs: "Observability (A10)", wbs: "WBS 1.3.2.1.5",
+    about: "One per node. Relays commands to its hardware services, loads trial buffers, reports aggregate health.",
+    gaps: ["Heartbeat metric set (A5.1)"] },
+  "c-hw": { title: "Hardware services", runs: "Lab: node machine (one container per device)", logs: "Observability (A10)", wbs: "WBS 1.3.2.2.1 (spec), 1.3.2.2.2 (mock), 1.3.2.3",
+    about: "One service per device, all implementing the same contract. Digital twins and the mock service implement it too, so they can stand in for real hardware.",
+    gaps: ["Contract transport: HTTP+JSON for control, something else for tag streams?"] },
+  "c-atto": { title: "Attosecond controller", runs: "Lab: SBC (Raspberry Pi class) + FPGA per link, plus a coordinating controller", logs: "Unclear (A10.2)", wbs: "WBS 1.2 (Tara Fortier: specs; Krister Shalm: lab)",
+    about: "Stabilizes links, sets frequencies and phase relationships, reports which links are available. Kept as simple as possible. Its API is developer-only because it can break the network.",
+    gaps: ["Where does the quantum/attosecond boundary settle? Krister expects functions to migrate across it."] },
+  "c-inst": { title: "Instruments", runs: "Physical lab", logs: "Through their hardware service", wbs: "WBS 1.2, 1.3 hardware",
+    about: "Lasers, down-conversion sources, detectors, time taggers (several vendors plus a lab-built one), waveplates, modulators, optical switches, cryostats, power meters. Memories are not in the Design phase.",
+    gaps: [] },
+  "z-user": { title: "Researcher's machine", runs: "Outside our control", logs: "—", about: "Anything here is untrusted.", gaps: [] },
+  "z-hosted": { title: "Hosted tier", runs: "Cloud or campus data centre (undecided)", logs: "Observability", wbs: "WBS 1.5.2.2 (hosting setup)",
+    about: "Everything user-facing and everything that doesn't need to touch hardware.",
+    gaps: ["Commercial cloud, CU, or NCSA?"] },
+  "z-lab": { title: "Boulder lab", runs: "On-prem", logs: "Pushed to Observability (A10)", wbs: "",
+    about: "Two nodes for the Design-phase MVP; 16 later. Everything that touches hardware runs here.",
+    gaps: [] },
+  "z-node": { title: "Node machine", runs: "One Linux machine per node, running containers", logs: "Pushed to Observability (A10)", wbs: "WBS 1.1.4.9 (provisioning)",
+    about: "Runs the node controller and that node's hardware services. Candidate platform: Incus / IncusOS with image-based provisioning.",
+    gaps: ["Hardware is only logically part of a node, so is one machine per node the right unit? (Aug 27 §8)"] },
+};
+
+const TAG_LABEL = { notes: "notes", inferred: "inferred", unknown: "?" };
+const panel = document.getElementById("panel");
+const svg = document.getElementById("map");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const tag = t => `<span class="tag ${t}">${TAG_LABEL[t]}</span>`;
+const nameOf = id => (NODES[id] || {}).title || id;
+const chip = id => `<button class="chip" data-go="${id}">${EDGES[id] ? id + " · " + esc(EDGES[id].title) : esc(nameOf(id))}</button>`;
+
+function overview() {
+  const rows = Object.entries(EDGES).map(([id, e]) =>
+    `<li><button data-go="${id}"><span class="id">${id}</span><span>${esc(e.title)}</span><span class="n">${e.gaps.length} gaps</span></button></li>`).join("");
+  const total = Object.values(EDGES).reduce((n, e) => n + e.gaps.length, 0);
+  return `
+    <h2>What crosses each arrow</h2>
+    <p>Click an arrow for the operations it carries, or a box for where it runs and where it logs. ${total} open gaps across ${Object.keys(EDGES).length} arrows.</p>
+    <h3>Arrows</h3>
+    <ul class="ov-list">${rows}</ul>
+    <h3>Tags</h3>
+    <div class="legend-tags">
+      <div>${tag("notes")} said in a meeting or written in the WBS</div>
+      <div>${tag("inferred")} reasoning from the notes</div>
+      <div>${tag("unknown")} placeholder nobody has discussed</div>
+    </div>
+    <h3>Choices baked in</h3>
+    <ul class="plain">
+      <li>The Quantum Layer API runs at the lab, so the lab stays operable when the site link is down.</li>
+      <li>Node controller and hardware services run as containers on one Linux machine per node.</li>
+      <li>Only the Quantum Layer API commands the attosecond layer.</li>
+      <li>Logs and metrics are pushed to one hosted observability stack.</li>
+    </ul>`;
+}
+
+function edgeView(id) {
+  const e = EDGES[id];
+  const ops = e.ops.length ? `
+    <h3>Operations</h3>
+    <table><thead><tr><th>Operation</th><th>Returns</th><th>Basis</th></tr></thead><tbody>
+    ${e.ops.map(([op, ret, t, src]) => `<tr><td>${esc(op)}${src ? `<span class="src">${esc(src)}</span>` : ""}</td><td class="ret">${esc(ret)}</td><td>${tag(t)}</td></tr>`).join("")}
+    </tbody></table>` : "";
+  const gaps = e.gaps.length ? `<h3>Gaps</h3><ol class="gaps">${e.gaps.map((g, i) => `<li><span class="gid">${id}.${i + 1}</span><span>${esc(g)}</span></li>`).join("")}</ol>` : "";
+  return `
+    <button class="back" data-go="">← All arrows</button>
+    <div class="eyebrow">${id}</div>
+    <h2>${esc(e.title)}</h2>
+    <dl class="facts">
+      <dt>Transport</dt><dd class="mono">${esc(e.transport)}</dd>
+      <dt>Crosses</dt><dd>${esc(e.crosses)}</dd>
+      <dt>Caller</dt><dd>${chip(e.from)}</dd>
+      <dt>Callee</dt><dd>${chip(e.to)}</dd>
+    </dl>
+    ${e.note ? `<p style="margin-top:14px">${esc(e.note)}</p>` : ""}
+    ${ops}${gaps}`;
+}
+
+function nodeView(id) {
+  const n = NODES[id];
+  const touching = Object.entries(EDGES).filter(([, e]) => e.from === id || e.to === id).map(([eid]) => eid);
+  return `
+    <button class="back" data-go="">← All arrows</button>
+    <h2>${esc(n.title)}</h2>
+    <dl class="facts">
+      <dt>Runs on</dt><dd>${esc(n.runs)}</dd>
+      <dt>Logs to</dt><dd>${esc(n.logs)}</dd>
+      ${n.wbs ? `<dt>WBS</dt><dd>${esc(n.wbs)}</dd>` : ""}
+    </dl>
+    <p style="margin-top:14px">${esc(n.about)}</p>
+    ${touching.length ? `<h3>Connections</h3><div class="links">${touching.map(chip).join("")}</div>` : ""}
+    ${n.gaps.length ? `<h3>Open</h3><ul class="plain">${n.gaps.map(g => `<li>${esc(g)}</li>`).join("")}</ul>` : ""}`;
+}
+
+function select(id, push = true) {
+  svg.querySelectorAll(".sel").forEach(el => el.classList.remove("sel"));
+  svg.querySelectorAll(".edge .ln").forEach(ln => {
+    const m = ln.getAttribute("marker-end");
+    if (m) ln.setAttribute("marker-end", m.replace("-sel)", ")"));
+  });
+  if (EDGES[id]) {
+    const g = svg.querySelector(`.edge[data-id="${id}"]`);
+    g.classList.add("sel");
+    const ln = g.querySelector(".ln");
+    ln.setAttribute("marker-end", ln.getAttribute("marker-end").replace(")", "-sel)"));
+    panel.innerHTML = edgeView(id);
+  } else if (NODES[id]) {
+    const g = svg.querySelector(`[data-id="${id}"]`);
+    if (g && g.classList.contains("comp")) g.classList.add("sel");
+    panel.innerHTML = nodeView(id);
+  } else {
+    panel.innerHTML = overview();
+    id = "";
+  }
+  if (push) { try { history.replaceState(null, "", id ? "#" + id : location.pathname + location.search); } catch (_) {} }
+}
+
+svg.addEventListener("click", ev => {
+  const g = ev.target.closest("[data-id]");
+  if (g) { ev.stopPropagation(); select(g.dataset.id); }
+});
+svg.addEventListener("keydown", ev => {
+  if (ev.key !== "Enter" && ev.key !== " ") return;
+  const g = ev.target.closest("[data-id]");
+  if (g) { ev.preventDefault(); select(g.dataset.id); }
+});
+panel.addEventListener("click", ev => {
+  const b = ev.target.closest("[data-go]");
+  if (b) select(b.dataset.go);
+});
+window.addEventListener("hashchange", () => select(decodeURIComponent(location.hash.slice(1)), false));
+select(decodeURIComponent(location.hash.slice(1)), false);
+</script>
+
+</body></html>
